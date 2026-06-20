@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="One-tap backup for Calls, SMS and Gmail"
+            android:text="Date-wise backup for Calls, SMS and Gmail"
             android:textColor="#6B7280"
             android:textSize="19sp" />
 
@@ -65,10 +65,66 @@
             android:textSize="20sp" />
 
         <TextView
+            android:id="@+id/dateTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="Select Backup Date Range"
+            android:textColor="#111827"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/dateHintText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Default: last 7 days. End date stays today unless manually changed."
+            android:textColor="#6B7280"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/startDateButton"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="18dp"
+            android:backgroundTint="#FFFFFF"
+            android:text="Start Date"
+            android:textColor="#111827"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/endDateButton"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="#FFFFFF"
+            android:text="End Date"
+            android:textColor="#111827"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/selectedRangeText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
+            android:lineSpacingExtra="4dp"
+            android:paddingLeft="16dp"
+            android:paddingTop="14dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="14dp"
+            android:text="Selected range"
+            android:textColor="#111827"
+            android:textSize="17sp" />
+
+        <TextView
             android:id="@+id/includesTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="38dp"
+            android:layout_marginTop="34dp"
             android:text="Backup Includes"
             android:textColor="#111827"
             android:textSize="22sp"
@@ -88,7 +144,7 @@
             android:id="@+id/backupButton"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:layout_marginTop="46dp"
+            android:layout_marginTop="42dp"
             android:backgroundTint="#D1D5DB"
             android:text="BACKUP NOW"
             android:textColor="#111827"
@@ -107,7 +163,7 @@
             android:paddingTop="18dp"
             android:paddingRight="18dp"
             android:paddingBottom="18dp"
-            android:text="Ready. Enter Gmail once. Next time it will auto-fill."
+            android:text="Ready."
             android:textColor="#111827"
             android:textSize="19sp" />
 

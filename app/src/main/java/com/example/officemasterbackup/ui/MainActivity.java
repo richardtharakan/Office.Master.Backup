@@ -2,6 +2,7 @@ package com.example.officemasterbackup.ui;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.DatePickerDialog;
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -27,6 +28,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
@@ -47,6 +50,10 @@ import javax.mail.Part;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.InternetAddress;
+import javax.mail.search.AndTerm;
+import javax.mail.search.ComparisonTerm;
+import javax.mail.search.ReceivedDateTerm;
+import javax.mail.search.SearchTerm;
 
 public class MainActivity extends Activity {
 
@@ -56,16 +63,22 @@ public class MainActivity extends Activity {
     private static final String KEY_GMAIL_EMAIL = "gmail_email";
     private static final String KEY_GMAIL_PASSWORD = "gmail_app_password";
 
-    // Keep this small first. After successful test, change 10 to 50 / 100 / 500.
-    private static final int GMAIL_LIMIT = 10;
-
-    // Prevent Gmail from hanging too long.
-    private static final int GMAIL_TOTAL_TIMEOUT_SECONDS = 30;
+    private static final int GMAIL_LIMIT = 100;
+    private static final int GMAIL_TOTAL_TIMEOUT_SECONDS = 45;
 
     private TextView statusText;
+    private TextView selectedRangeText;
+
     private Button backupButton;
+    private Button startDateButton;
+    private Button endDateButton;
+
     private EditText gmailEmailInput;
     private EditText gmailPasswordInput;
+
+    private Calendar startCalendar;
+    private Calendar endCalendar;
+    private boolean endDateManuallySelected = false;
 
     private String currentStamp;
 
@@ -74,6 +87,15 @@ public class MainActivity extends Activity {
             Manifest.permission.READ_SMS
     };
 
+    private final SimpleDateFormat uiDateFormat =
+            new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
+
+    private final SimpleDateFormat fileDateFormat =
+            new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+    private final SimpleDateFormat readableDateFormat =
+            new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,43 +103,25 @@ public class MainActivity extends Activity {
 
         statusText = findViewById(R.id.statusText);
         backupButton = findViewById(R.id.backupButton);
+        startDateButton = findViewById(R.id.startDateButton);
+        endDateButton = findViewById(R.id.endDateButton);
+        selectedRangeText = findViewById(R.id.selectedRangeText);
 
-        gmailEmailInput = findEditTextByNames(
-                "gmailEmailInput",
-                "gmailEmail",
-                "gmailAddressInput",
-                "emailInput",
-                "emailEditText",
-                "editTextTextEmailAddress"
-        );
-
-        gmailPasswordInput = findEditTextByNames(
-                "gmailPasswordInput",
-                "gmailAppPasswordInput",
-                "appPasswordInput",
-                "passwordInput",
-                "passwordEditText",
-                "editTextTextPassword"
-        );
+        gmailEmailInput = findViewById(R.id.gmailEmailInput);
+        gmailPasswordInput = findViewById(R.id.gmailPasswordInput);
 
         makeAppPasswordVisible();
+        setupDefaultDateRange();
         loadSavedGmailDetails();
+        updateDateViews();
         updatePermissionStatus();
+
+        startDateButton.setOnClickListener(v -> showStartDatePicker());
+        endDateButton.setOnClickListener(v -> showEndDatePicker());
 
         backupButton.setOnClickListener(v -> {
             if (!hasAllPermissions()) {
                 requestPermissions(requiredPermissions, PERMISSION_REQUEST_CODE);
-                return;
-            }
-
-            if (gmailEmailInput == null || gmailPasswordInput == null) {
-                statusText.setText(
-                        "Gmail input fields not found.\n\n" +
-                                "In activity_main.xml set Gmail email EditText id:\n" +
-                                "gmailEmailInput\n\n" +
-                                "Set Gmail App Password EditText id:\n" +
-                                "gmailPasswordInput"
-                );
                 return;
             }
 
@@ -129,43 +133,131 @@ public class MainActivity extends Activity {
                 return;
             }
 
+            long startMillis = getStartOfDayMillis(startCalendar);
+            long endMillis = getEndOfDayMillis(endCalendar);
+
+            if (endMillis < startMillis) {
+                statusText.setText("End Date cannot be before Start Date. Please select End Date again.");
+                return;
+            }
+
             saveGmailDetails(gmailEmail, gmailAppPassword);
 
             backupButton.setEnabled(false);
-            statusText.setText("Starting backup...\nReading call logs, SMS and Gmail...");
+            statusText.setText(
+                    "Starting backup...\n" +
+                            "Date range: " + uiDateFormat.format(startCalendar.getTime()) +
+                            " to " + uiDateFormat.format(endCalendar.getTime()) + "\n\n" +
+                            "Reading call logs, SMS and Gmail..."
+            );
 
-            new Thread(() -> backupCallsSmsGmailAndZip(gmailEmail, gmailAppPassword)).start();
+            new Thread(() -> backupCallsSmsGmailAndZip(
+                    gmailEmail,
+                    gmailAppPassword,
+                    startMillis,
+                    endMillis
+            )).start();
         });
     }
 
-    private EditText findEditTextByNames(String... idNames) {
-        for (String idName : idNames) {
-            int id = getResources().getIdentifier(idName, "id", getPackageName());
-            if (id != 0) {
-                EditText editText = findViewById(id);
-                if (editText != null) {
-                    return editText;
-                }
-            }
-        }
-        return null;
+    private void setupDefaultDateRange() {
+        endCalendar = Calendar.getInstance();
+
+        startCalendar = Calendar.getInstance();
+        startCalendar.add(Calendar.DAY_OF_YEAR, -6);
+
+        endDateManuallySelected = false;
+    }
+
+    private void showStartDatePicker() {
+        DatePickerDialog dialog = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    startCalendar.set(Calendar.YEAR, year);
+                    startCalendar.set(Calendar.MONTH, month);
+                    startCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    if (!endDateManuallySelected) {
+                        endCalendar = Calendar.getInstance();
+                    }
+
+                    updateDateViews();
+                },
+                startCalendar.get(Calendar.YEAR),
+                startCalendar.get(Calendar.MONTH),
+                startCalendar.get(Calendar.DAY_OF_MONTH)
+        );
+
+        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        dialog.show();
+    }
+
+    private void showEndDatePicker() {
+        DatePickerDialog dialog = new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    endCalendar.set(Calendar.YEAR, year);
+                    endCalendar.set(Calendar.MONTH, month);
+                    endCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+                    endDateManuallySelected = true;
+                    updateDateViews();
+                },
+                endCalendar.get(Calendar.YEAR),
+                endCalendar.get(Calendar.MONTH),
+                endCalendar.get(Calendar.DAY_OF_MONTH)
+        );
+
+        dialog.getDatePicker().setMinDate(getStartOfDayMillis(startCalendar));
+        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        dialog.show();
+    }
+
+    private void updateDateViews() {
+        String startText = uiDateFormat.format(startCalendar.getTime());
+        String endText = uiDateFormat.format(endCalendar.getTime());
+
+        startDateButton.setText("Start Date: " + startText);
+        endDateButton.setText("End Date: " + endText);
+
+        String endMode = endDateManuallySelected
+                ? "End date manually selected"
+                : "End date auto set to today";
+
+        selectedRangeText.setText(
+                "Selected Range:\n" +
+                        startText + " to " + endText + "\n\n" +
+                        endMode
+        );
+    }
+
+    private long getStartOfDayMillis(Calendar source) {
+        Calendar calendar = (Calendar) source.clone();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private long getEndOfDayMillis(Calendar source) {
+        Calendar calendar = (Calendar) source.clone();
+        calendar.set(Calendar.HOUR_OF_DAY, 23);
+        calendar.set(Calendar.MINUTE, 59);
+        calendar.set(Calendar.SECOND, 59);
+        calendar.set(Calendar.MILLISECOND, 999);
+        return calendar.getTimeInMillis();
     }
 
     private void makeAppPasswordVisible() {
-        if (gmailPasswordInput != null) {
-            gmailPasswordInput.setInputType(
-                    InputType.TYPE_CLASS_TEXT |
-                            InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-            );
-            gmailPasswordInput.setTransformationMethod(null);
-        }
+        gmailPasswordInput.setInputType(
+                InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+        );
+        gmailPasswordInput.setTransformationMethod(null);
     }
 
     private void loadSavedGmailDetails() {
-        if (gmailEmailInput == null || gmailPasswordInput == null) {
-            return;
-        }
-
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 
         String savedEmail = prefs.getString(KEY_GMAIL_EMAIL, "");
@@ -194,7 +286,7 @@ public class MainActivity extends Activity {
 
     private void updatePermissionStatus() {
         if (hasAllPermissions()) {
-            statusText.setText("Ready. Enter Gmail once. Next time it will auto-fill.");
+            statusText.setText("Ready. Default backup range is last 7 days.");
         } else {
             statusText.setText("Permissions needed. Tap Backup Now and allow Call Log + SMS access.");
         }
@@ -204,22 +296,30 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> statusText.setText(message));
     }
 
-    private void backupCallsSmsGmailAndZip(String gmailEmail, String gmailAppPassword) {
+    private void backupCallsSmsGmailAndZip(
+            String gmailEmail,
+            String gmailAppPassword,
+            long startMillis,
+            long endMillis
+    ) {
         try {
             currentStamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm", Locale.getDefault()).format(new Date());
+
+            String startDateText = fileDateFormat.format(new Date(startMillis));
+            String endDateText = fileDateFormat.format(new Date(endMillis));
 
             File officeBackupDir = new File(getExternalFilesDir(null), "OfficeBackup");
             deleteFolderContents(officeBackupDir);
             officeBackupDir.mkdirs();
 
-            setStatusFromThread("Reading call logs...");
-            BackupResult callResult = backupCallLogs();
+            setStatusFromThread("Reading call logs...\n" + startDateText + " to " + endDateText);
+            BackupResult callResult = backupCallLogs(startMillis, endMillis);
 
-            setStatusFromThread("Reading SMS...");
-            BackupResult smsResult = backupSms();
+            setStatusFromThread("Reading SMS...\n" + startDateText + " to " + endDateText);
+            BackupResult smsResult = backupSms(startMillis, endMillis);
 
-            setStatusFromThread("Connecting to Gmail...\nPlease wait up to " + GMAIL_TOTAL_TIMEOUT_SECONDS + " seconds.");
-            GmailAttempt gmailAttempt = backupGmailWithTimeout(gmailEmail, gmailAppPassword);
+            setStatusFromThread("Connecting to Gmail...\n" + startDateText + " to " + endDateText);
+            GmailAttempt gmailAttempt = backupGmailWithTimeout(gmailEmail, gmailAppPassword, startMillis, endMillis);
 
             setStatusFromThread("Creating final ZIP...");
             File zipFile = createZipFile(officeBackupDir);
@@ -231,6 +331,7 @@ public class MainActivity extends Activity {
                 backupButton.setEnabled(true);
                 statusText.setText(
                         "Backup ZIP created successfully.\n\n" +
+                                "Date range:\n" + startDateText + " to " + endDateText + "\n\n" +
                                 "Call logs saved: " + callResult.count + "\n" +
                                 "SMS saved: " + smsResult.count + "\n" +
                                 "Gmail saved: " + gmailAttempt.result.count + "\n\n" +
@@ -248,9 +349,16 @@ public class MainActivity extends Activity {
         }
     }
 
-    private GmailAttempt backupGmailWithTimeout(String gmailEmail, String gmailAppPassword) throws Exception {
+    private GmailAttempt backupGmailWithTimeout(
+            String gmailEmail,
+            String gmailAppPassword,
+            long startMillis,
+            long endMillis
+    ) throws Exception {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<BackupResult> future = executor.submit(() -> backupGmail(gmailEmail, gmailAppPassword));
+        Future<BackupResult> future = executor.submit(
+                () -> backupGmail(gmailEmail, gmailAppPassword, startMillis, endMillis)
+        );
 
         try {
             BackupResult result = future.get(GMAIL_TOTAL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -262,7 +370,6 @@ public class MainActivity extends Activity {
             String errorText =
                     "Gmail backup timed out after " + GMAIL_TOTAL_TIMEOUT_SECONDS + " seconds.\n" +
                             "ZIP still created with Call Logs + SMS.\n" +
-                            "For testing, Gmail limit is " + GMAIL_LIMIT + " emails.\n" +
                             "Check internet speed, Gmail App Password, and Gmail IMAP setting.";
 
             BackupResult errorResult = writeGmailErrorFile(gmailEmail, errorText);
@@ -303,16 +410,19 @@ public class MainActivity extends Activity {
         }
     }
 
-    private BackupResult backupCallLogs() throws Exception {
+    private BackupResult backupCallLogs(long startMillis, long endMillis) throws Exception {
         Cursor cursor = null;
 
         JSONArray jsonArray = new JSONArray();
         StringBuilder readable = new StringBuilder();
 
-        SimpleDateFormat readableDateFormat = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
-
         readable.append("CALL LOG READABLE SUMMARY\n");
         readable.append("============================================================\n\n");
+        readable.append("Date range: ")
+                .append(readableDateFormat.format(new Date(startMillis)))
+                .append(" to ")
+                .append(readableDateFormat.format(new Date(endMillis)))
+                .append("\n\n");
 
         String[] projection = new String[]{
                 CallLog.Calls.NUMBER,
@@ -322,11 +432,17 @@ public class MainActivity extends Activity {
                 CallLog.Calls.DURATION
         };
 
+        String selection = CallLog.Calls.DATE + " >= ? AND " + CallLog.Calls.DATE + " <= ?";
+        String[] selectionArgs = new String[]{
+                String.valueOf(startMillis),
+                String.valueOf(endMillis)
+        };
+
         cursor = getContentResolver().query(
                 CallLog.Calls.CONTENT_URI,
                 projection,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 CallLog.Calls.DATE + " DESC"
         );
 
@@ -377,6 +493,8 @@ public class MainActivity extends Activity {
         JSONObject root = new JSONObject();
         root.put("backup_type", "call_log");
         root.put("backup_time", currentStamp);
+        root.put("date_range_start_millis", startMillis);
+        root.put("date_range_end_millis", endMillis);
         root.put("total_calls", count);
         root.put("calls", jsonArray);
 
@@ -394,16 +512,19 @@ public class MainActivity extends Activity {
         return new BackupResult(count, baseDir.getAbsolutePath());
     }
 
-    private BackupResult backupSms() throws Exception {
+    private BackupResult backupSms(long startMillis, long endMillis) throws Exception {
         Cursor cursor = null;
 
         JSONArray jsonArray = new JSONArray();
         StringBuilder readable = new StringBuilder();
 
-        SimpleDateFormat readableDateFormat = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
-
         readable.append("SMS READABLE SUMMARY\n");
         readable.append("============================================================\n\n");
+        readable.append("Date range: ")
+                .append(readableDateFormat.format(new Date(startMillis)))
+                .append(" to ")
+                .append(readableDateFormat.format(new Date(endMillis)))
+                .append("\n\n");
 
         String[] projection = new String[]{
                 Telephony.Sms.ADDRESS,
@@ -412,11 +533,17 @@ public class MainActivity extends Activity {
                 Telephony.Sms.TYPE
         };
 
+        String selection = Telephony.Sms.DATE + " >= ? AND " + Telephony.Sms.DATE + " <= ?";
+        String[] selectionArgs = new String[]{
+                String.valueOf(startMillis),
+                String.valueOf(endMillis)
+        };
+
         cursor = getContentResolver().query(
                 Telephony.Sms.CONTENT_URI,
                 projection,
-                null,
-                null,
+                selection,
+                selectionArgs,
                 Telephony.Sms.DATE + " DESC"
         );
 
@@ -463,6 +590,8 @@ public class MainActivity extends Activity {
         JSONObject root = new JSONObject();
         root.put("backup_type", "sms");
         root.put("backup_time", currentStamp);
+        root.put("date_range_start_millis", startMillis);
+        root.put("date_range_end_millis", endMillis);
         root.put("total_sms", count);
         root.put("messages", jsonArray);
 
@@ -480,16 +609,24 @@ public class MainActivity extends Activity {
         return new BackupResult(count, baseDir.getAbsolutePath());
     }
 
-    private BackupResult backupGmail(String gmailEmail, String gmailAppPassword) throws Exception {
+    private BackupResult backupGmail(
+            String gmailEmail,
+            String gmailAppPassword,
+            long startMillis,
+            long endMillis
+    ) throws Exception {
         JSONArray jsonArray = new JSONArray();
         StringBuilder readable = new StringBuilder();
-
-        SimpleDateFormat readableDateFormat = new SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault());
 
         readable.append("GMAIL READABLE SUMMARY\n");
         readable.append("============================================================\n\n");
         readable.append("Account: ").append(gmailEmail).append("\n");
-        readable.append("Limit: Latest ").append(GMAIL_LIMIT).append(" emails from INBOX\n\n");
+        readable.append("Date range: ")
+                .append(readableDateFormat.format(new Date(startMillis)))
+                .append(" to ")
+                .append(readableDateFormat.format(new Date(endMillis)))
+                .append("\n");
+        readable.append("Limit: Latest ").append(GMAIL_LIMIT).append(" matched emails from INBOX\n\n");
 
         Properties props = new Properties();
         props.put("mail.store.protocol", "imaps");
@@ -517,51 +654,62 @@ public class MainActivity extends Activity {
             inbox = store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
 
-            int totalMessages = inbox.getMessageCount();
+            SearchTerm startTerm = new ReceivedDateTerm(ComparisonTerm.GE, new Date(startMillis));
+            SearchTerm endTerm = new ReceivedDateTerm(ComparisonTerm.LE, new Date(endMillis));
+            SearchTerm dateRangeTerm = new AndTerm(startTerm, endTerm);
 
-            if (totalMessages > 0) {
-                int start = Math.max(1, totalMessages - GMAIL_LIMIT + 1);
-                Message[] messages = inbox.getMessages(start, totalMessages);
+            Message[] messages = inbox.search(dateRangeTerm);
 
-                for (int i = messages.length - 1; i >= 0; i--) {
-                    Message message = messages[i];
+            Arrays.sort(messages, (m1, m2) ->
+                    Long.compare(getMessageTimeSafe(m2), getMessageTimeSafe(m1))
+            );
 
-                    String subject = message.getSubject() == null ? "" : message.getSubject();
-                    String from = addressesToString(message.getFrom());
+            int totalToSave = Math.min(GMAIL_LIMIT, messages.length);
 
-                    Date messageDate = message.getSentDate();
-                    if (messageDate == null) {
-                        messageDate = message.getReceivedDate();
-                    }
+            for (int i = 0; i < totalToSave; i++) {
+                Message message = messages[i];
 
-                    String dateReadable = messageDate == null ? "" : readableDateFormat.format(messageDate);
+                String subject = message.getSubject() == null ? "" : message.getSubject();
+                String from = addressesToString(message.getFrom());
 
-                    String body = "";
-                    try {
-                        body = getTextFromPart(message);
-                    } catch (Exception bodyError) {
-                        body = "[Could not read email body: " + bodyError.getMessage() + "]";
-                    }
-
-                    JSONObject item = new JSONObject();
-                    item.put("date_readable", dateReadable);
-                    item.put("from", from);
-                    item.put("subject", subject);
-                    item.put("body", body == null ? "" : body);
-
-                    jsonArray.put(item);
-
-                    readable.append("------------------------------------------------------------\n");
-                    readable.append("Date: ").append(dateReadable).append("\n");
-                    readable.append("From: ").append(from).append("\n");
-                    readable.append("Subject: ").append(subject).append("\n");
-                    readable.append("Message:\n").append(body == null ? "" : body).append("\n\n");
-
-                    count++;
-
-                    final int progress = count;
-                    setStatusFromThread("Reading Gmail...\nSaved " + progress + " / " + GMAIL_LIMIT + " emails");
+                Date messageDate = message.getReceivedDate();
+                if (messageDate == null) {
+                    messageDate = message.getSentDate();
                 }
+
+                String dateReadable = messageDate == null ? "" : readableDateFormat.format(messageDate);
+
+                String body = "";
+                try {
+                    body = getTextFromPart(message);
+                } catch (Exception bodyError) {
+                    body = "[Could not read email body: " + bodyError.getMessage() + "]";
+                }
+
+                JSONObject item = new JSONObject();
+                item.put("date_readable", dateReadable);
+                item.put("from", from);
+                item.put("subject", subject);
+                item.put("body", body == null ? "" : body);
+
+                jsonArray.put(item);
+
+                readable.append("------------------------------------------------------------\n");
+                readable.append("Date: ").append(dateReadable).append("\n");
+                readable.append("From: ").append(from).append("\n");
+                readable.append("Subject: ").append(subject).append("\n");
+                readable.append("Message:\n").append(body == null ? "" : body).append("\n\n");
+
+                count++;
+
+                final int progress = count;
+                setStatusFromThread(
+                        "Reading Gmail...\n" +
+                                "Saved " + progress + " / " + totalToSave + " emails\n" +
+                                fileDateFormat.format(new Date(startMillis)) +
+                                " to " +
+                                fileDateFormat.format(new Date(endMillis))
+                );
             }
 
         } finally {
@@ -578,6 +726,8 @@ public class MainActivity extends Activity {
         root.put("backup_type", "gmail");
         root.put("backup_time", currentStamp);
         root.put("gmail_account", gmailEmail);
+        root.put("date_range_start_millis", startMillis);
+        root.put("date_range_end_millis", endMillis);
         root.put("total_gmail_saved", count);
         root.put("emails", jsonArray);
 
@@ -593,6 +743,18 @@ public class MainActivity extends Activity {
         writeTextFile(txtFile, readable.toString());
 
         return new BackupResult(count, baseDir.getAbsolutePath());
+    }
+
+    private long getMessageTimeSafe(Message message) {
+        try {
+            Date date = message.getReceivedDate();
+            if (date == null) {
+                date = message.getSentDate();
+            }
+            return date == null ? 0 : date.getTime();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private BackupResult writeGmailErrorFile(String gmailEmail, String errorText) throws Exception {
