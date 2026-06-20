@@ -1,172 +1,223 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/mainScroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F3F6FA"
+    android:background="@drawable/bg_main_gradient"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingLeft="28dp"
-        android:paddingTop="36dp"
-        android:paddingRight="28dp"
-        android:paddingBottom="36dp">
+        android:padding="18dp">
 
-        <TextView
-            android:id="@+id/titleText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Office Master Backup"
-            android:textColor="#111827"
-            android:textSize="34sp"
-            android:textStyle="bold" />
+            android:background="@drawable/bg_form_card"
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:id="@+id/subTitleText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="Date-wise backup for Calls, SMS and Gmail"
-            android:textColor="#6B7280"
-            android:textSize="19sp" />
+            <!-- Top segmented header -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_tab_container"
+                android:orientation="horizontal"
+                android:padding="4dp">
 
-        <EditText
-            android:id="@+id/gmailEmailInput"
-            android:layout_width="match_parent"
-            android:layout_height="62dp"
-            android:layout_marginTop="32dp"
-            android:background="#FFFFFF"
-            android:hint="Gmail address"
-            android:inputType="textEmailAddress"
-            android:paddingLeft="18dp"
-            android:paddingRight="18dp"
-            android:singleLine="true"
-            android:textColor="#111827"
-            android:textColorHint="#9CA3AF"
-            android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_tab_active"
+                    android:gravity="center"
+                    android:paddingLeft="22dp"
+                    android:paddingTop="12dp"
+                    android:paddingRight="22dp"
+                    android:paddingBottom="12dp"
+                    android:text="KTS"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/gmailPasswordInput"
-            android:layout_width="match_parent"
-            android:layout_height="62dp"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:hint="Gmail App Password"
-            android:inputType="textVisiblePassword"
-            android:paddingLeft="18dp"
-            android:paddingRight="18dp"
-            android:singleLine="true"
-            android:textColor="#111827"
-            android:textColorHint="#9CA3AF"
-            android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingLeft="22dp"
+                    android:paddingTop="12dp"
+                    android:paddingRight="22dp"
+                    android:paddingBottom="12dp"
+                    android:text="Enterprises"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
-        <TextView
-            android:id="@+id/dateTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="32dp"
-            android:text="Select Backup Date Range"
-            android:textColor="#111827"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/titleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:text="Office Master Backup"
+                android:textColor="#FFFFFF"
+                android:textSize="24sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/dateHintText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Default: last 7 days. End date stays today unless manually changed."
-            android:textColor="#6B7280"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/subTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Smart backup for calls, SMS and Gmail"
+                android:textColor="#AFC4D7"
+                android:textSize="13sp" />
 
-        <Button
-            android:id="@+id/startDateButton"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginTop="18dp"
-            android:backgroundTint="#FFFFFF"
-            android:text="Start Date"
-            android:textColor="#111827"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            <EditText
+                android:id="@+id/gmailEmailInput"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="22dp"
+                android:background="@drawable/bg_input_field"
+                android:hint="Gmail address"
+                android:inputType="textEmailAddress"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:singleLine="true"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#9FB2C3"
+                android:textSize="15sp" />
 
-        <Button
-            android:id="@+id/endDateButton"
-            android:layout_width="match_parent"
-            android:layout_height="58dp"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="#FFFFFF"
-            android:text="End Date"
-            android:textColor="#111827"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            <EditText
+                android:id="@+id/gmailPasswordInput"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_input_field"
+                android:hint="Gmail App Password"
+                android:inputType="textVisiblePassword"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:singleLine="true"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#9FB2C3"
+                android:textSize="15sp" />
 
-        <TextView
-            android:id="@+id/selectedRangeText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:background="#FFFFFF"
-            android:lineSpacingExtra="4dp"
-            android:paddingLeft="16dp"
-            android:paddingTop="14dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="14dp"
-            android:text="Selected range"
-            android:textColor="#111827"
-            android:textSize="17sp" />
+            <TextView
+                android:id="@+id/dateTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:text="Choose Backup Range"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/includesTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="34dp"
-            android:text="Backup Includes"
-            android:textColor="#111827"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            <TextView
+                android:id="@+id/dateHintText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Default is last 7 days. End date stays today unless manually changed."
+                android:textColor="#AFC4D7"
+                android:textSize="12sp" />
 
-        <TextView
-            android:id="@+id/includesText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
-            android:lineSpacingExtra="8dp"
-            android:text="Call log JSON + readable TXT&#10;SMS JSON + readable TXT&#10;Gmail JSON + readable TXT&#10;Final ZIP export"
-            android:textColor="#374151"
-            android:textSize="20sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/backupButton"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginTop="42dp"
-            android:backgroundTint="#D1D5DB"
-            android:text="BACKUP NOW"
-            android:textColor="#111827"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+                <Button
+                    android:id="@+id/startDateButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_secondary_button"
+                    android:text="Start Date"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/statusText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="36dp"
-            android:background="#FFFFFF"
-            android:lineSpacingExtra="6dp"
-            android:minHeight="110dp"
-            android:paddingLeft="18dp"
-            android:paddingTop="18dp"
-            android:paddingRight="18dp"
-            android:paddingBottom="18dp"
-            android:text="Ready."
-            android:textColor="#111827"
-            android:textSize="19sp" />
+                <Space
+                    android:layout_width="10dp"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/endDateButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_secondary_button"
+                    android:text="End Date"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/selectedRangeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_info_box"
+                android:lineSpacingExtra="3dp"
+                android:minHeight="64dp"
+                android:padding="14dp"
+                android:text="Selected Range"
+                android:textColor="#DCEAF5"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/includesTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="22dp"
+                android:text="Backup Includes"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/includesText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:lineSpacingExtra="5dp"
+                android:text="Call log JSON + readable TXT&#10;SMS JSON + readable TXT&#10;Gmail JSON + readable TXT&#10;Final ZIP export"
+                android:textColor="#C5D7E6"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/backupButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_primary_button"
+                android:text="Create Backup"
+                android:textAllCaps="false"
+                android:textColor="#101010"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_status_box"
+                android:lineSpacingExtra="4dp"
+                android:minHeight="100dp"
+                android:padding="14dp"
+                android:text="Ready."
+                android:textColor="#E9F2F9"
+                android:textSize="13sp" />
+
+        </LinearLayout>
 
     </LinearLayout>
-
 </ScrollView>
