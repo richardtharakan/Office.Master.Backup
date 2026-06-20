@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/mainScroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F3F6FA"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="28dp"
+        android:paddingTop="36dp"
+        android:paddingRight="28dp"
+        android:paddingBottom="36dp">
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Office Master Backup"
+            android:textColor="#111827"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/subTitleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="One-tap backup for Calls, SMS and Gmail"
+            android:textColor="#6B7280"
+            android:textSize="19sp" />
+
+        <EditText
+            android:id="@+id/gmailEmailInput"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:layout_marginTop="32dp"
+            android:background="#FFFFFF"
+            android:hint="Gmail address"
+            android:inputType="textEmailAddress"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:singleLine="true"
+            android:textColor="#111827"
+            android:textColorHint="#9CA3AF"
+            android:textSize="20sp" />
+
+        <EditText
+            android:id="@+id/gmailPasswordInput"
+            android:layout_width="match_parent"
+            android:layout_height="62dp"
+            android:layout_marginTop="12dp"
+            android:background="#FFFFFF"
+            android:hint="Gmail App Password"
+            android:inputType="textVisiblePassword"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:singleLine="true"
+            android:textColor="#111827"
+            android:textColorHint="#9CA3AF"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/includesTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="38dp"
+            android:text="Backup Includes"
+            android:textColor="#111827"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/includesText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:lineSpacingExtra="8dp"
+            android:text="Call log JSON + readable TXT&#10;SMS JSON + readable TXT&#10;Gmail JSON + readable TXT&#10;Final ZIP export"
+            android:textColor="#374151"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/backupButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="46dp"
+            android:backgroundTint="#D1D5DB"
+            android:text="BACKUP NOW"
+            android:textColor="#111827"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="36dp"
+            android:background="#FFFFFF"
+            android:lineSpacingExtra="6dp"
+            android:minHeight="110dp"
+            android:paddingLeft="18dp"
+            android:paddingTop="18dp"
+            android:paddingRight="18dp"
+            android:paddingBottom="18dp"
+            android:text="Ready. Enter Gmail once. Next time it will auto-fill."
+            android:textColor="#111827"
+            android:textSize="19sp" />
+
+    </LinearLayout>
+
+</ScrollView>
